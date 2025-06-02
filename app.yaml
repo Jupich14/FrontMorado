@@ -1,28 +1,6 @@
-runtime: nodejs20
-service: frontend
-
-env_variables:
-  NEXT_PUBLIC_API_URL: "https://proyeckev.uc.r.appspot.com"
-
-handlers:
-  - url: /_next/static
-    static_dir: .next/static
-    secure: always
-
-  - url: /static
-    static_dir: public
-    secure: always
-
-  - url: /(.*\.(gif|png|jpg|ico|txt|json|svg))$
-    static_files: public/\1
-    upload: public/.*\.(gif|png|jpg|ico|txt|json|svg)$
-    secure: always
-
-  - url: /.*
-    script: auto
-    secure: always
-
-entrypoint: node .next/standalone/server.js
+runtime: python39
+service: default
+entrypoint: gunicorn -b :$PORT main:app --log-level debug
 
 instance_class: F1
 
@@ -31,4 +9,52 @@ automatic_scaling:
   min_instances: 1
   max_instances: 10
 
-env: standard 
+env_variables:
+  FLASK_APP: "main"
+  FLASK_ENV: "production"
+  FLASK_DEBUG: "0"
+  DATABASE_URL: "sqlite:////tmp/users.db"
+  SECRET_KEY: "tu-clave-secreta-aqui-cambiame-en-produccion"
+  NODE_ENV: "production"
+  NPM_CONFIG_PRODUCTION: "true"
+
+handlers:
+  # Serve Next.js static files
+  - url: /_next/static/(.*)
+    static_files: frontend/.next/static/\1
+    upload: frontend/.next/static/.*
+    secure: always
+
+  # Serve Next.js chunks
+  - url: /_next/static/chunks/(.*)
+    static_files: frontend/.next/static/chunks/\1
+    upload: frontend/.next/static/chunks/.*
+    secure: always
+
+  # Serve Next.js CSS
+  - url: /_next/static/css/(.*)
+    static_files: frontend/.next/static/css/\1
+    upload: frontend/.next/static/css/.*
+    secure: always
+
+  # Serve Next.js media
+  - url: /_next/static/media/(.*)
+    static_files: frontend/.next/static/media/\1
+    upload: frontend/.next/static/media/.*
+    secure: always
+
+  # Serve public static files
+  - url: /(.*\.(gif|png|jpg|ico|txt|json|svg))$
+    static_files: frontend/public/\1
+    upload: frontend/public/.*\.(gif|png|jpg|ico|txt|json|svg)$
+    secure: always
+
+  # API routes
+  - url: /api/.*
+    script: auto
+    secure: always
+
+  # All other routes go to Next.js
+  - url: /.*
+    script: auto
+    secure: always 
